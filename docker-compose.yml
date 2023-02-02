@@ -1,0 +1,10 @@
+version: '3.2'
+
+services:
+  botservice:
+    container_name: botservice
+    build: ./
+    ports:
+      - "3030:3000"
+    env_file:
+      - .env
