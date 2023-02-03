@@ -3,14 +3,23 @@ import handleMessage from "../functions/handle.message";
 import { createCustomer, getUser } from '../functions/api/customers.api';
 import { getAgent } from "../functions/api/agents.api";
 import config from "../config/config";
+import { trackerRegistry } from '../functions/api/tracker.api';
 
 export const receive = async (req: Request, res: Response) => {
     try {
         let msg = null;
         let contact  = null;
+        let idAd = '';
+        let sourceId = '';
+        let isFromAd: boolean;
 
         for (const message of req.body.messages) {
-            msg = message;
+            msg = message;        
+            if(message.referral) {
+                idAd = message.referral.source_url;
+                sourceId = message.referral.source_id;
+                isFromAd = true;
+             }
         };
 
         for (const contacts of req.body.contacts) {
@@ -58,6 +67,15 @@ export const receive = async (req: Request, res: Response) => {
                 text = msg["button"]["text"];
                 break;
             }
+
+        if(sourceId && sourceId !== "") {
+            trackerRegistry({
+                userId: wa_id, 
+                botId: config.dialog.NAMESPACE,
+                sourceId: sourceId,
+                sourceURL: idAd
+            });
+        };
 
         await handleMessage(type, text, client!, agent);
 

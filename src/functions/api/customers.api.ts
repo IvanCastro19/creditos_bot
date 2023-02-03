@@ -13,7 +13,7 @@ export const getUser = async (wa_id: string) => {
             method: "GET",
             url: `${url}/user/getUser/${wa_id}`,
             headers: {
-              "Authorization": `${api_key}`,
+              "Authorization": `access-token ${api_key}`,
               "bot_id": NAMESPACE!,
               "Content-Type": "application/json",
             }
@@ -27,7 +27,6 @@ export const getUser = async (wa_id: string) => {
 
         return customer;
     } catch(e: any) {
-        console.error("ERROR AT GET CUSTOMER", e.request.data);
         return customer;
     }
 };
