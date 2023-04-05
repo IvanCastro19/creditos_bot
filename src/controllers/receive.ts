@@ -44,8 +44,6 @@ export const receive = async (req: Request, res: Response) => {
                 pageId: config.dialog.NAMESPACE,
                 isTop: false
             });
-
-            console.log(client);
         }
 
         if(!client)

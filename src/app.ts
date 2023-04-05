@@ -4,6 +4,7 @@ import connect from './db/db.connection';
 import createError from 'http-errors';
 import routes from './routes/index';
 import cors from 'cors';
+import logging from './config/log/logging';
 
 export const app = express();
 
@@ -18,6 +19,24 @@ app.all('*', function(req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     next();
 });
+
+//logging
+app.use((req, res, next) => {
+    logging.warn(
+      "SERVER",
+      `METHOD->[${req.method}], URL->[${req.url}] IP->[${req.socket.remoteAddress}]`
+    );
+  
+    res.on("finish", () => {
+      logging.warn(
+        "SERVER",
+        `METHOD->[${req.method}], URL->[${req.url}] IP->[${req.socket.remoteAddress}] STATUS->[${res.statusCode}]`
+      );
+    });
+  
+    next();
+  });
+  
 
 //Routes
 app.use('/', routes);

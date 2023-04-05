@@ -2,7 +2,8 @@ import handlePayload from "../actions/handle.payload";
 import IAgent from "../../interfaces/agent.interface";
 import ICustomer from "../../interfaces/customer.interface";
 import { genImage, genText } from "./response";
-
+import config from "../../config/config";
+import ResponseBot from "../../controllers/response";
 export const getPagoMensual = (amount= 50000, plazo = 60) => {
 	let pagoMensual = 0;
 	switch (amount) {
@@ -100,91 +101,52 @@ export const getCurrentMessage = async (
 	user: ICustomer,
 	agent: IAgent
 ) => {
+	const responseBot = new ResponseBot(config.dialog.NAMESPACE);
 
 	let response: any[] = [];
-
-	if (user.isWaitingAmount) {
-		response = [await handlePayload("SI_COTIZAR", user, agent)];
-	} else if (user.isWaitingConfirmAmount) {
-		switch (user.amount) {
-			case 15000:
-				response = [await handlePayload("COTIZAR_15", user, agent)];
-				break;
-			case 25000:
-				response = [await handlePayload("COTIZAR_25", user, agent)];
-				break;
-			case 50000:
-				response = [await handlePayload("COTIZAR_50", user, agent)];
-				break;
-			case 100000:
-				response = [await handlePayload("COTIZAR_100", user, agent)];
-				break;
-			case 200000:
-				response = [await handlePayload("COTIZAR_200", user, agent)];
-				break;
-			default:
-				response = [await handlePayload("COTIZAR_15", user, agent)];
-				break;
-		}
-	} else if (user.isWaitingMensualidades) {
-		response = [await handlePayload("AMOUNT_CONFIRMED", user, agent)];
-	} else if (user.isWaitingConfirmMensualidades) {
-		switch (user.mensualidades) {
-			case 24:
-				response = await handlePayload("24_MENSUALIDADES", user, agent);
-				break;
-			case 36:
-				response = await handlePayload("36_MENSUALIDADES", user, agent);
-				break;
-			case 48:
-				response = await handlePayload("48_MENSUALIDADES", user, agent);
-				break;
-			default:
-				response = await handlePayload("60_MENSUALIDADES", user, agent);
-				break;
-		}
-	} else if (user.isWaitingEnd) {
-		response = [await handlePayload("WAITING_END", user, agent)];
-	} else if (user.endConfirm) {
-		response = [];
-	} else {
-		response = [await handlePayload("SERVICES", user, agent)];
-	}
+	let start = [];
 	if (!user.isStarted) {
-		user.isStarted = true;
-		let start = [];
-		if (agent) {
-			if (agent.userImgs) {
-				agent.userImgs[0]
-					? start.push(genImage(`${agent.userImgs[0].Location}`))
-					: null;
-				agent.userImgs[2]
-					? start.push(genImage(`${agent.userImgs[2].Location}`))
-					: null;
-				agent.userImgs[3]
-					? start.push(genImage(`${agent.userImgs[3].Location}`))
-					: null;
-			} else {
-				user.isStarted = false;
-			}
+	  user.isStarted = true;
+	  if (agent) {
+		if (agent.userImgs) {
+		  agent.userImgs[1]
+			? start.push(responseBot.genImage(`${agent.userImgs[1].Location}`))
+			: null;
 		} else {
-			user.isStarted = false;
+		  user.isStarted = false;
 		}
-		start.push(
-			genText(
-				`Hola!, ${user.name} este beneficio está dirigido a todos los Pensionados y Jubilados del IMSS, ` +
-				"los préstamos son financiado por Bancos regulados por Banxico y pueden ser solicitados desde " +
-				"$15,000 hasta $600,000 pesos con autorización en 48 hrs, trámite en línea y tasa de interés desde el 2% mensual."
-			)
-		);
-		if (Array.isArray(response)) {
-			response = start.concat(response);
-		} else {
-			start.push(response);
-			response = start;
-		}
-
-		// await createUser(user);
+	  } else {
+		user.isStarted = false;
+	  }
+	  
+	  response.push(
+		responseBot.genImageTemplate(
+		  "best_sellers_start", 
+		  "https://i.imgur.com/pgJr2Sl.jpg"
+		)
+	  );
+	} else {
+	  response.push(
+		responseBot.genText(
+		  `Sr@ ${user.name} me gustaría brindarle una información más exacta, en unos momentos su asesor se pondrá en contacto.`
+		),
+	  );
+	  response.push(
+		responseBot.genText(
+		  `Si esto no sucede o no contesta sus mensajes, puede escribirnos ` +
+			`por whatsapp a este número 4495843856 y le estaremos atendiendo. \nQuejas o cambios de asesor: 4499967297, 4496882899, 4496887301, 4496887302.`
+		),
+	  );
+	}
+	response.push(
+	  responseBot.genTemplate("info_template")
+	);
+  
+	if (Array.isArray(response)) {
+	  response = start.concat(response);
+	} else {
+	  start.push(response);
+	  response = start;
 	}
 	return response;
 };
